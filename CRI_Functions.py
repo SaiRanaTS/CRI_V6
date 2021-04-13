@@ -145,7 +145,6 @@ def Relat_Motion_para(Xo, Yo, Xt, Yt, theta_o, theta_ot, alpha_t, Vott):
 
     # DCPA Calculation
     inang_dcpa = theta_ot - alpha_t -180
-    print('inage :', inang_dcpa)
     ang_D = math.sin(math.radians( inang_dcpa))
     DCPA_1 = D_Btwn * ang_D
     DCPA_rnd = round(DCPA_1, 5)

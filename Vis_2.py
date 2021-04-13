@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import xlrd
 import numpy as np
@@ -13,11 +15,14 @@ from matplotlib.patches import Circle
 import trgs_ang
 import deci_sup
 import domain
+import inter_Sec_chk
+import shapely.geometry
+import shapely.affinity
 
 from matplotlib import pyplot
 from descartes import PolygonPatch
 
-Ship_number = 3
+Ship_number = 1
 # load data Simulation_Data/F5R2.xlsx
 path = 'Simulation_Data/F5R2.xlsx'  # D1R2, D2R1-2, F1R1-2, F4R1-5, F5R1-4
 wb = xlrd.open_workbook(filename=path)  # 打开文件
@@ -111,6 +116,10 @@ class RotatedRect:
         return self.get_contour().intersection(other.get_contour())
 
 
+
+
+
+
 def str2float(s):
     def str2num(s):
         return {str(x): x for x in range(10)}[s]
@@ -189,6 +198,14 @@ def Vsl_Typ():
     t4 = 4
     t5 = 4
     return (t1,t2,t3,t4,t5)
+
+
+
+
+
+
+
+
 
 def update(frame):
 
@@ -284,13 +301,20 @@ def update(frame):
     tsxx2 = pk1[29]
     mkrc1 = vsl_colr(CRI_tv1)
 
+    #------------------------------------------- Heading Compass Arrow -------------------------------------------------
+    corc = ov_heading[-1]
+    sine_degt1 = math.sin(math.radians(corc))
+    cos_degt1 = math.cos(math.radians(corc))
+    z1 = 10 * sine_degt1
+    p1 = 10 * cos_degt1
+    Pio = plt.quiver(2750, 550, z1, p1, scale=110, color='white', pivot='middle')
 
     #-------------------------------------- Domain Implementation-------------------------------------------------------
 
     #Domain Function Call
     domain_termOS = domain.domain(osvv1,osan1,ownship_ln)
     domain_all_pointsOS = domain_termOS[2]
-
+    scale_domain = domain_termOS[4]
     #Domain Parameters from Function
     OD1 = abs(domain_all_pointsOS[0])
     OD2 = abs(domain_all_pointsOS[1])
@@ -299,15 +323,19 @@ def update(frame):
     OD5 = abs(domain_all_pointsOS[4])
 
     ov_mk = def_marker.transformed(ov_mk_rtt)
-    ov = UnsizedMarker(ov_mk)
+    #ov = UnsizedMarker(ov_mk)
     plt_ov_mk = ax.scatter(ov_x[-1], ov_y[-1], marker=ov_mk, color='white', s=15 ** 2, alpha=0.5)
 
     def_Domaino = Path([[-OD2, -OD3], [OD1, -OD3], [OD1, OD4], [0, OD5], [-OD2, OD4], [0, 0] ],
                        [Path.MOVETO, Path.LINETO, Path.LINETO, Path.LINETO, Path.LINETO, Path.CLOSEPOLY])
 
+
+
     #Domain Draw
     ov_dom = def_Domaino.transformed(ov_mk_rtt)
-    plt_ov_dom = ax.scatter(ov_x[-1], ov_y[-1], marker=ov_dom, facecolors='none', edgecolors='white', s=1852, alpha=0.3)
+    #ov_dom =  UnsizedMarker(ov_dom)
+
+    plt_ov_dom = ax.scatter(ov_x[-1], ov_y[-1], marker=ov_dom, facecolors='none', edgecolors='white', s=osvv1**(1.8*scale_domain), alpha=0.3)
 
     # --------------------------------------------- CAZ Implementation--------------------------------------------------
 
@@ -346,12 +374,23 @@ def update(frame):
     TS1D5 = abs(domain_all_pointsTS1[4])
 
 
+
+
     r22 = RotatedRect(tv1_x[-1], tv1_y[-1], [-0.005, -0.02], [0.005, -0.02], [0.005, 0.01], [0, 0.02], [-0.005, 0.01],tv1_heading[-1])
     def_Domain1 = Path([[-TS1D2, -TS1D3], [TS1D1, -TS1D3], [TS1D1, TS1D4], [0, TS1D5], [-TS1D2, TS1D4], [0, 0] ],
                        [Path.MOVETO, Path.LINETO, Path.LINETO, Path.LINETO, Path.LINETO, Path.CLOSEPOLY])
 
     t1_dom = def_Domain1.transformed(tv1_mk_rtt)
-    plt_t1_dom = ax.scatter(tv1_x[-1], tv1_y[-1], marker=t1_dom, facecolors='none', edgecolors='white', s=1852,alpha=0.3)
+    #tv1_dom = UnsizedMarker(t1_dom)
+    plt_t1_dom = ax.scatter(tv1_x[-1], tv1_y[-1], marker=t1_dom , facecolors='none', edgecolors='white', s=tsvv1**3.5,alpha=0.3)
+
+    #----------------------------------------------Inter Section Check-------------------------------------------------
+
+    int_chk1 = inter_Sec_chk.intersec(OD1,OD2,OD3,OD4,OD5,TS1D1,TS1D2,TS1D3,TS1D4,TS1D5,ov_heading[-1],tv1_heading[-1],ov_x[-1],ov_y[-1],tv1_x[-1],tv1_y[-1])
+
+    if int_chk1[0] == 1:
+        print("Domain intersection warning for TS1 ")
+        print('Area of intersection : ',int_chk1[1]*1852,'m2')
 
     # --------------------------------------------- CAZ Implementation--------------------------------------------------
 
@@ -438,8 +477,17 @@ def update(frame):
 
     t2_dom = def_Domain2.transformed(tv2_mk_rtt)
 
-    plt_t2_dom = ax.scatter(tv2_x[-1], tv2_y[-1], marker=t2_dom, facecolors='none', edgecolors='white', s=1850,
+    plt_t2_dom = ax.scatter(tv2_x[-1], tv2_y[-1], marker=t2_dom, facecolors='none', edgecolors='white', s=1852,
                             alpha=0.3)
+
+    #----------------------------------------------Inter Section Check-------------------------------------------------
+
+    int_chk2 = inter_Sec_chk.intersec(OD1,OD2,OD3,OD4,OD5,TS2D1,TS2D2,TS2D3,TS2D4,TS2D5,ov_heading[-1],tv2_heading[-1],ov_x[-1],ov_y[-1],tv2_x[-1],tv2_y[-1])
+
+    if int_chk2[0] == 1:
+        print("Domain intersection warning for TS2 ")
+        print('Area of intersection : ',int_chk2[1]*1852,'m2')
+
 
     # --------------------------------------------- CAZ Implementation--------------------------------------------------
 
@@ -525,7 +573,17 @@ def update(frame):
                        [Path.MOVETO, Path.LINETO, Path.LINETO, Path.LINETO, Path.LINETO, Path.CLOSEPOLY])
 
     t3_dom = def_Domain3.transformed(tv3_mk_rtt)
-    plt_t3_dom = ax.scatter(tv3_x[-1], tv3_y[-1], marker=t3_dom, facecolors='none', edgecolors='white', s=1850,alpha=0.3)
+    plt_t3_dom = ax.scatter(tv3_x[-1], tv3_y[-1], marker=t3_dom, facecolors='none', edgecolors='white', s=1852,alpha=0.3)
+
+    #----------------------------------------------Inter Section Check-------------------------------------------------
+
+    int_chk3 = inter_Sec_chk.intersec(OD1,OD2,OD3,OD4,OD5,TS3D1,TS3D2,TS3D3,TS3D4,TS3D5,ov_heading[-1],tv3_heading[-1],ov_x[-1],ov_y[-1],tv3_x[-1],tv3_y[-1])
+
+    if int_chk3[0] == 1:
+        print("Domain intersection warning for TS3 ")
+        print('Area of intersection : ',int_chk3[1]*1852,'m2')
+
+
 
     # --------------------------------------------- CAZ Implementation--------------------------------------------------
 
@@ -612,6 +670,13 @@ def update(frame):
 
     t4_dom = def_Domain4.transformed(tv4_mk_rtt)
     plt_t4_dom = ax.scatter(tv4_x[-1], tv4_y[-1], marker=t4_dom, facecolors='none', edgecolors='white', s=1850,alpha=0.3)
+    #----------------------------------------------Inter Section Check-------------------------------------------------
+
+    int_chk4 = inter_Sec_chk.intersec(OD1,OD2,OD3,OD4,OD5,TS4D1,TS4D2,TS4D3,TS4D4,TS4D5,ov_heading[-1],tv4_heading[-1],ov_x[-1],ov_y[-1],tv4_x[-1],tv4_y[-1])
+
+    if int_chk4[0] == 1:
+        print("Domain intersection warning for TS3 ")
+        print('Area of intersection : ',int_chk4[1]*1852,'m2')
 
     # --------------------------------------------- CAZ Implementation--------------------------------------------------
 
@@ -695,6 +760,15 @@ def update(frame):
                        [Path.MOVETO, Path.LINETO, Path.LINETO, Path.LINETO, Path.LINETO, Path.CLOSEPOLY])
     t5_dom = def_Domain5.transformed(tv5_mk_rtt)
     plt_t5_dom = ax.scatter(tv5_x[-1], tv5_y[-1], marker=t5_dom, facecolors='none', edgecolors='white', s=1850,alpha=0.3)
+
+    #----------------------------------------------Inter Section Check-------------------------------------------------
+
+    int_chk5 = inter_Sec_chk.intersec(OD1,OD2,OD3,OD4,OD5,TS4D1,TS5D2,TS5D3,TS5D4,TS5D5,ov_heading[-1],tv5_heading[-1],ov_x[-1],ov_y[-1],tv5_x[-1],tv5_y[-1])
+
+    if int_chk5[0] == 1:
+        print("Domain intersection warning for TS5 ")
+        print('Area of intersection : ',int_chk5[1]*1852,'m2')
+
 
     # --------------------------------------------- CAZ Implementation--------------------------------------------------
     circle5 = Circle([2, 2], 2)
@@ -786,7 +860,7 @@ def update(frame):
     time.append(ov_data.row_values(frame)[0])
     time_text.set_text(time[-1])
     
-    return  plt_ov_mk_com,plt_t00_cir,ows_Info,Vsl5_Info,Vsl4_Info,Vsl3_Info,Vsl2_Info,Vsl1_Info, plt_Dec6,plt_Dec5, plt_Dec4, plt_Dec3, plt_Dec2, ln_ov, ln_tv1, ln_tv2, ln_tv3, ln_tv4, ln_tv5, time_text, plt_ov_dom, plt_ov_mk, plt_tv1_mk, plt_t1_dom, plt_tv2_mk, plt_t2_dom, plt_tv3_mk, plt_t3_dom, plt_tv4_mk, plt_t4_dom, plt_tv5_mk, plt_t5_dom, plt_ov_txt, plt_tv1_txt, plt_tv1_cpa, plt_tv2_txt, plt_tv2_cpa, plt_tv3_txt, plt_tv3_cpa, plt_tv4_txt, plt_tv4_cpa, plt_tv5_txt, plt_tv5_cpa,plt_t5_cir,plt_t4_cir,plt_t3_cir,plt_t2_cir,plt_t1_cir,plt_t0_cir,plt_Dec1
+    return  Pio,plt_ov_mk_com,plt_t00_cir,ows_Info,Vsl5_Info,Vsl4_Info,Vsl3_Info,Vsl2_Info,Vsl1_Info, plt_Dec6,plt_Dec5, plt_Dec4, plt_Dec3, plt_Dec2, ln_ov, ln_tv1, ln_tv2, ln_tv3, ln_tv4, ln_tv5, time_text, plt_ov_dom, plt_ov_mk, plt_tv1_mk, plt_t1_dom, plt_tv2_mk, plt_t2_dom, plt_tv3_mk, plt_t3_dom, plt_tv4_mk, plt_t4_dom, plt_tv5_mk, plt_t5_dom, plt_ov_txt, plt_tv1_txt, plt_tv1_cpa, plt_tv2_txt, plt_tv2_cpa, plt_tv3_txt, plt_tv3_cpa, plt_tv4_txt, plt_tv4_cpa, plt_tv5_txt, plt_tv5_cpa,plt_t5_cir,plt_t4_cir,plt_t3_cir,plt_t2_cir,plt_t1_cir,plt_t0_cir,plt_Dec1
     # return ln_ov, ln_tv1, ln_tv2, ln_tv3, ln_tv4, ln_tv5, time_text, plt_ov_mk, plt_tv2_mk, plt_tv3_mk, plt_tv4_mk, plt_tv5_mk, plt_tv1_txt, plt_tv1_cpa, plt_tv2_txt, plt_tv2_cpa, plt_tv3_txt, plt_tv3_cpa, plt_tv4_txt, plt_tv4_cpa, plt_tv5_txt, plt_tv5_cpa
     # if (data2[frame + 1, 1] < 20):
     #     return ln_ov, ln_tv1, ln_tv2, ln_tv3, time_text, plt_ov_mk, plt_tv1_mk, plt_tv2_mk, plt_tv3_mk, plt_tv1_txt, plt_tv1_cpa, plt_tv2_txt, plt_tv2_cpa, plt_tv3_txt, plt_tv3_cpa
@@ -813,5 +887,5 @@ mngr.window.wm_geometry("+0+0")
 
 
 plt.show()
-ani.save('test_animation.gif', writer='imagemagick')
-ani.save('test_animation.mp4', writer='PillowWriter')
+# ani.save('test_animation.gif', writer='imagemagick')
+# ani.save('test_animation.mp4', writer='PillowWriter')

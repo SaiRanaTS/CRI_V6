@@ -16,7 +16,7 @@ def domain (Vsogx, corc, Ln):
 
     #------------------------------------------------------------
 
-    cog = (-corc)
+    cog = (0)
     #print ('the velocity : ', Vsog)
     log_t = math.log10(Vsog)
     #print('log vog : ',log_t)
@@ -90,5 +90,5 @@ def domain (Vsogx, corc, Ln):
     C_points = C
     R_Values = [Rf,Ra,Rs,Rp]
     D_Values = [D1,D2,D3,D4,D5]
-    return (C_points,R_Values,D_Values,cc)
+    return (C_points,R_Values,D_Values,cc,kdt)
 
