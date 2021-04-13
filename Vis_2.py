@@ -7,7 +7,6 @@ from matplotlib.path import Path
 from matplotlib.markers import MarkerStyle
 from matplotlib import transforms
 import CRI_FunExe
-import elp
 import math
 import shapely
 from matplotlib.patches import Circle
@@ -19,8 +18,8 @@ from matplotlib import pyplot
 from descartes import PolygonPatch
 
 Ship_number = 3
-# load data
-path = 'F5R2.xlsx'  # D1R2, D2R1-2, F1R1-2, F4R1-5, F5R1-4
+# load data Simulation_Data/F5R2.xlsx
+path = 'Simulation_Data/F5R2.xlsx'  # D1R2, D2R1-2, F1R1-2, F4R1-5, F5R1-4
 wb = xlrd.open_workbook(filename=path)  # 打开文件
 ov_names = ['Ulstein', 'SULA', 'HEROY', 'Haram']
 ov_data = wb.sheet_by_name(ov_names[Ship_number-1])  # 0-3
